@@ -2636,8 +2636,8 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             GivePlayerCash(playerid, 1000);
             TogglePlayerControllable(playerid, 1);
             SendClientMessage(playerid, COLOR_YELLOW2,"That's all, if you need help you can /helpme, have fun!");
-            SendClientMessage(playerid, COLOR_LIGHTBLUE,"A taxi has bringed you to the DMV so you can take your Drivers License");
-            SetPlayerPos(playerid, 1424.1869,-1696.1482,13.5469);
+            //SendClientMessage(playerid, COLOR_LIGHTBLUE,"A taxi has bringed you to the DMV so you can take your Drivers License");
+            SetPlayerPos(playerid, 5184.3589, 0.8383, 30.3718);
 		}
 		else
 		{
