@@ -135,7 +135,7 @@ new reg1[ ] = "This is a RolePlay Server.\n{FFFFFF}DeathMatch {F81414}isn't acce
     reg5[ ] = "•Spamming will lead you to {F81414}mute/kick.\n",
     reg6[ ] = "•DriveBy isn't allowed, only with a {F81414}good {FFFFFF}RP reason.\n",
     reg7[ ] = "•Remember, ALWAYS RolePlay.\n",
-    reg8[ ] = "\n\n{F81414}changeme {F3FF02}wishes you good luck!";
+    reg8[ ] = "\n\n{F81414}Ultimate City {F3FF02}wishes you good luck!";
 //==================================[ENUMS]=====================================
 enum pInfo
 {
@@ -671,7 +671,7 @@ new vehEngine[MAX_VEHICLES];
 main()
 {
 	printf("-------------------------------------");
-	printf("changeme ");
+	printf("Ultimate City ");
 	printf("-------------------------------------");
 	printf("By Jafet Macario");
 }
@@ -1464,7 +1464,7 @@ public OnGameModeInit()
 	SetTimer("SaveTimer", 2222, true);
 //==============================================================================
 	printf("------ Engine System Started------- ");
-	SetGameModeText("changeme");
+	SetGameModeText("Ultimate City");
 	gettime(ghour, gminute, gsecond);
 	FixHour(ghour);
 	ghour = shifthour;
@@ -1694,7 +1694,7 @@ public OnPlayerSpawn(playerid)
 	{
 		new sexthings[] = "1\tMale \n2\tFemale";
 		ShowPlayerDialog(playerid,155,DIALOG_STYLE_LIST,"Hello sir,please select your Sex:((This information is IC.))",sexthings,"Select","Leave Game");
-		SetPlayerPos(playerid, 5184.3589, -29.8383, 20.3718);
+		SetPlayerPos(playerid, 5184.3589, 0.8383, 30.3718);
 		gPlayerRegStep[playerid] = 1;
 		new randphone = 100000 + random(899999);
 		PlayerInfo[playerid][pNumber] = randphone;
@@ -1702,16 +1702,16 @@ public OnPlayerSpawn(playerid)
 	}
     if(PlayerInfo[playerid][pFirstJoined] == 0)
 	{
-	    new string[512];
+	    //new string[512];
 	    gPlayerTutorialing[playerid] = 1;
 	    SetPlayerHealth(playerid,100);
-	    SetPlayerPos(playerid,5184.3589, -29.8383, 20.3718);
-	    SetPlayerCameraPos(playerid,5184.3589, -29.8383, 20.3718);//The airport
-	    SetPlayerCameraLookAt(playerid,5184.3589, -29.8383, 20.3718);
-	    format(string,sizeof(string),"This is the airport,your first spawn place ~n~ You will be able to change it if~n~you will get into a faction~n~or if you will buy a house~n~Basic Commands:/help.");
-	    TextDrawSetString(Textdraw98[playerid],string);
-	    TextDrawShowForPlayer(playerid,Textdraw98[playerid]);
-	    SendClientMessage(playerid,COLOR_WHITE,"{248B10}Tutorial:{FFFFFF}Use SPACEBAR to continue,SHIFT to go back.");
+	    SetPlayerPos(playerid,5184.3589, 0.8383, 30.3718);
+	    SetPlayerCameraPos(playerid,5184.3589, 0.8383, 30.3718);//The airport
+	    SetPlayerCameraLookAt(playerid,5184.3589, 0.8383, 30.3718);
+	    //format(string,sizeof(string),"This is the airport,your first spawn place ~n~ You will be able to change it if~n~you will get into a faction~n~or if you will buy a house~n~Basic Commands:/help.");
+	    //TextDrawSetString(Textdraw98[playerid],string);
+	    //TextDrawShowForPlayer(playerid,Textdraw98[playerid]);
+	    //SendClientMessage(playerid,COLOR_WHITE,"{248B10}Tutorial:{FFFFFF}Use SPACEBAR to continue,SHIFT to go back.");
 	    SetPlayerSkin(playerid, PlayerInfo[playerid][pModel]);
 	    return 1;
 	}
@@ -1720,7 +1720,7 @@ public OnPlayerSpawn(playerid)
     	SendClientMessage(playerid, COLOR_LIGHTRED, "** This server requires a Login BEFORE spawn (Kicked) **");
         Kick(playerid);
  	}
-	SetPlayerPos(playerid, 5184.3589, -29.8383, 20.3718);
+	SetPlayerPos(playerid, 5184.3589, 0.8383, 30.3718);
 	SetPlayerInterior(playerid,0);
 	SetPlayerVirtualWorld(playerid, 0);
 	SetOriginalColor(playerid);
@@ -1827,7 +1827,7 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
     {
         if(gPlayerTutorialing[playerid] >= 1)
         {
-            if(gPlayerTutorialing[playerid] == 1)
+            /*if(gPlayerTutorialing[playerid] == 1)
             {
 			    gPlayerTutorialing[playerid] = 2;
 			    SetPlayerPos(playerid,1412.8313, -1700.3066, 13.5395);
@@ -1935,7 +1935,16 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			    TogglePlayerControllable(playerid, 1);
 			    SendClientMessage(playerid,COLOR_WHITE,"{248B10}Tutorial:{FFFFFF}Now we will need some data from you!.");
 			    return 1;
-			}
+			}*/
+			gPlayerTutorialing[playerid] = 0;
+			PlayerInfo[playerid][pFirstJoined] = 1;
+			PlayerInfo[playerid][pSelected] = 0;
+			SpawnPlayer(playerid);
+			SetPlayerVirtualWorld(playerid,0);
+			TextDrawHideForPlayer(playerid,Textdraw98[playerid]);
+			SetCameraBehindPlayer(playerid);
+			TogglePlayerControllable(playerid, 1);
+			//SendClientMessage(playerid,COLOR_WHITE,"{248B10}Tutorial:{FFFFFF}Now we will need some data from you!.");
 		}
 	}
 
