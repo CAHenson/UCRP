@@ -673,7 +673,6 @@ main()
 	printf("-------------------------------------");
 	printf("Ultimate City ");
 	printf("-------------------------------------");
-	printf("By Jafet Macario");
 }
 //==========================[CALLBACKS]=========================================
 public Unfreeze(playerid)
