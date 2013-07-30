@@ -19,6 +19,7 @@
 #define VEHICLE_File_PATH "DSHIP/Vehicles/"
 #define DEALERSHIP_File_PATH "DSHIP/Dealerships/"
 #define FUEL_STATION_File_PATH "DSHIP/FuelStations/"
+#define MAX_FACTIONS 15
 #define MAX_PLAYER_VEHICLES 3
 #define FUEL_PRICE 5
 #define GAS_CAN_PRICE 500
@@ -1436,6 +1437,11 @@ public OnGameModeInit()
 	CreateDynamicObject(1422, 5258.26270, 7.95484, 20.29330,   0.00000, 0.00000, 0.00000);
 	CreateDynamicObject(1422, 5262.34277, 7.98822, 20.29330,   0.00000, 0.00000, 0.00000);
 	CreateDynamicObject(1422, 5266.30273, 8.01273, 20.29330,   0.00000, 0.00000, 0.00000);
+	
+//===============================[PICKUPS]======================================
+	CreateDynamicPickup(1559, 5320.5298, 29.5945, 20.6959, 0, 0, -1, 100.0);
+
+
 //===============================DEALERSHIP=====================================
 	LoadVehicles();
 	LoadDealerships();
@@ -1454,6 +1460,9 @@ public OnGameModeInit()
 	}
 	SetTimer("MainTimer", 1000, true);
 	SetTimer("SaveTimer", 2222, true);
+	
+//==============================================================================
+
 //==============================================================================
 	printf("------ Engine System Started------- ");
 	SetGameModeText("Ultimate City");
@@ -1492,87 +1501,6 @@ public OnGameModeInit()
     SetTimer("ScoreUpdate", 1000, 1);
 	SetTimer("SetPlayerUnMute", 1000, 1);
     SetTimer("newbietimer", 30000, 1);
-//===============================[PICKUPS]==========================================
-	AddStaticPickup(1239, 23, 1707.8434,-2331.6506,-2.6797);
-	AddStaticPickup(1240, 23, 1173.112426, -1320.917602, 15.396226);
-	AddStaticPickup(1318, 23, 1172.914794, -1325.471313, 15.398929);
-	AddStaticPickup(1318, 23, 1482.534423, -1771.555541, 18.795755);
-	AddStaticPickup(1318, 23, 1555.134277, -1675.773071, 16.195312);
-	AddStaticPickup(1318, 23, 1565.185180, -1666.162963, 28.395606);
-	AddStaticPickup(1318, 23, 1653.883056, -1655.420898, 22.515625);
-	AddStaticPickup(1247, 23, 1525.285278, -1677.911865, 5.890625);
-	AddStaticPickup(1318, 23, 1568.560302, -1690.335815, 5.890625);
-	AddStaticPickup(1318, 23, 1727.056884, -1636.913208, 20.217334);
-	AddStaticPickup(1318, 23, 1797.998046, -1578.819091, 14.090865);
-	AddStaticPickup(1240, 23, 2034.583374, -1405.004516, 17.244943);
-	AddStaticPickup(1318, 23, 2233.053955, -1333.350463, 23.981575);
-	AddStaticPickup(1318, 23, 2232.929931, -1159.893554, 25.890625);
-	AddStaticPickup(1318, 23, 2351.947021, -1170.659545, 28.074401);
-	AddStaticPickup(1318, 23, 2421.583496, -1219.243041, 25.561477);
-	AddStaticPickup(1318, 23, 2166.275634, -1671.659545, 15.073946);
-	AddStaticPickup(1239, 23, 2165.229736, -1672.992187, 15.077716);
-	AddStaticPickup(1239, 23, 1666.597900, -1524.166992, 13.546875);
-	AddStaticPickup(1318, 23, 1667.901611, -1521.946777, 13.546875);
-	AddStaticPickup(1318, 23, 1568.028320, -1898.009155, 13.560886);
-	AddStaticPickup(1239, 23, 2162.161376, -102.522369, 2.750000);
-//==============================[VEHICLES]==========================================
-	AddStaticVehicle(596,1535.8279,-1667.0283,13.1042,1.2749,0,1); // //Copcar 1
-	AddStaticVehicle(596,1535.7777,-1678.2174,13.1041,359.0435,0,1); // //Copcar 2
-	AddStaticVehicle(596,1602.2314,-1688.1366,5.6119,88.9127,0,1); // //Copcar 3
-	AddStaticVehicle(596,1602.3998,-1696.2252,5.6117,89.5110,0,1); // //Copcar 4
-	AddStaticVehicle(596,1602.2968,-1704.6088,5.6114,89.2925,0,1); // //Copcar 5
-	AddStaticVehicle(596,1591.6299,-1711.7292,5.6110,0.5575,0,1); // //Copcar 6
-	AddStaticVehicle(596,1583.3506,-1711.8403,5.6123,359.9798,0,1); // //Copcar 7
-	AddStaticVehicle(596,1574.4407,-1711.5636,5.6112,0.4981,0,1); // //Copcar 8
-	AddStaticVehicle(596,1564.4946,-1711.8907,5.6117,0.0557,0,1); // //Copcar 9
-	AddStaticVehicle(597,1602.1552,-1691.9513,5.6600,90.2862,1,0); // //Copcar 10
-	AddStaticVehicle(597,1602.1045,-1684.0902,5.6588,89.9887,1,0); // //Copcar 11
-	AddStaticVehicle(597,1602.5887,-1700.3116,5.6600,90.1532,1,0); // //Copcar 12
-	AddStaticVehicle(597,1595.2753,-1711.4293,5.6598,1.4325,1,93); // //Copcar 13
-	AddStaticVehicle(597,1587.3236,-1711.8318,5.6587,359.5460,1,93); // //Copcar 14
-	AddStaticVehicle(598,1578.6815,-1712.0513,5.6365,358.1766,1,93); // //Copcar 15
-	AddStaticVehicle(598,1570.2655,-1711.8102,5.6356,359.8264,1,93); // //Copcar 16
-	AddStaticVehicle(596,1558.4491,-1711.7164,5.6120,0.7168,1,93); // //Copcar 17
-	AddStaticVehicle(596,1584.6483,-1671.5382,5.6145,270.2792,1,93); // //Copcar 18
-	AddStaticVehicle(596,1584.6222,-1667.4482,5.6145,270.0910,1,93); // //Copcar 19
-	AddStaticVehicle(599,1546.2502,-1650.8398,6.0786,90.8912,0,1); // //cop car 20
-	AddStaticVehicle(599,1546.8645,-1659.1162,6.0787,90.3100,0,1); // //cop car 21
-	AddStaticVehicle(599,1546.6399,-1667.8623,6.0780,90.4493,0,1); // //cop car 22
-	AddStaticVehicle(601,1545.8365,-1655.1222,5.6494,89.7686,0,1); // //cop car Swat Tank 23
-	AddStaticVehicle(528,1546.2603,-1662.9534,5.9328,89.3495,0,1); // //cop FBI truck(blue one) 24
-	AddStaticVehicle(427,1530.1572,-1644.9054,6.0225,179.7986,0,1); // //SWAT Enforcer 25
-	AddStaticVehicle(427,1538.6517,-1644.5701,6.0426,180.0564,0,1); // //SWAT Enforcer 26
-	AddStaticVehicle(427,1534.6859,-1645.0800,6.0228,178.4550,0,1); // //SWAT Enforcer 27
-	AddStaticVehicle(427,1526.0662,-1645.3656,6.0223,180.0917,0,1); // //SWAT Enforcer 28
-    AddStaticVehicle(428,570.7433,-1252.2587,17.6663,292.1557,24,1); // //Bank Truck in Rodeo Car 29
-	AddStaticVehicle(428,608.0444,-1237.8926,18.4802,111.9092,24,1); // //Bank Truck in Rodeo Car 30
-	AddStaticVehicle(426,1543.2870,-1612.4788,13.1262,269.5055,25,25); // //Cop Undercover Car 31
-	AddStaticVehicle(426,1543.1644,-1606.7509,13.1253,269.9076,25,25); // //Cop Undercover Car 32
-	AddStaticVehicle(421,1555.6886,-1605.9546,13.2653,180.6853,53,53); // //Cop Undercover Car 33
-	AddStaticVehicle(421,1561.6571,-1606.0315,13.2653,180.1476,53,53); // //Cop Undercover Car 34
-    AddStaticVehicle(416,1177.8341,-1338.3657,14.0368,270.3866,1,3); // //Ambulance EMS Car 35
-	AddStaticVehicle(416,1176.9736,-1308.6931,14.0205,267.3689,1,3); // //Ambulance EMS Car 36
-    AddStaticVehicle(442,1146.2450,-1295.7229,13.4723,90.3940,1,3); // Hearse for EMS Car 37
-	AddStaticVehicle(489,1146.2805,-1302.9196,13.8021,88.5398,1,3); // Rancher for EMS Car 38
-	AddStaticVehicle(489,1146.2393,-1309.4309,13.8083,91.4548,1,3); // Rancher for EMS Car 39
-	AddStaticVehicle(442,1145.8127,-1316.3143,13.4507,92.9838,1,3); // Hearse for EMS Car 40
-	AddStaticVehicle(563,1162.4646,-1301.3418,32.2003,277.2430,1,3); // EMS Heli 41
-	AddStaticVehicle(563,1163.9746,-1318.8575,32.1941,271.8757,1,3); // EMS Heli 42
-	AddStaticVehicle(490,1666.7798,-1719.3749,20.6192,0.9672,0,0); // FBI 43
-	AddStaticVehicle(490,1660.0472,-1719.5132,20.6102,359.8513,0,0); // FBI 44
-	AddStaticVehicle(490,1671.4838,-1710.0861,20.6083,90.5516,0,0); // FBI 45
-	AddStaticVehicle(490,1671.6444,-1702.4733,20.6114,92.2191,0,0); // FBI 46
-	AddStaticVehicle(541,1645.6516,-1695.8042,20.0834,270.8706,0,0); // FBI Bullet Car 47
-	AddStaticVehicle(541,1645.8918,-1700.3801,20.1054,270.4592,0,1); // FBI Bullet Car 48
-	AddStaticVehicle(421,1646.3101,-1709.2988,20.3669,269.9211,0,1); // FBI Washington Car 49
-	AddStaticVehicle(421,1646.3663,-1704.7172,20.3669,268.8617,0,1); // FBI Washington Car 50
-	AddStaticVehicle(416,2037.2849,-1425.5010,17.1416,359.6898,1,3); // //County hospital ambulance Car 51
-	AddStaticVehicle(416,2007.9158,-1410.9948,17.1415,90.1937,1,3); // //County hospital ambulance Car 52
-	AddStaticVehicle(416,2001.8311,-1399.1924,18.3391,181.5330,1,3); // //County hospital ambulance Car 53
-	AddStaticVehicle(416,2033.9324,-1447.6057,17.3766,270.3489,1,3); // //County hospital ambulance Car 54
-	dmvc = AddStaticVehicle(405,1415.5630,-1706.7310,13.4196,267.9858,1,1); // license1
-	dmvc1 = AddStaticVehicle(405,1416.1293,-1712.1976,13.4219,271.2856,1,1); // license2
-	dmvc2 = AddStaticVehicle(405,1415.3511,-1718.4138,13.4218,267.3419,1,1); // license3
 	return 1;
 }
 public OnGameModeExit()
@@ -1615,27 +1543,9 @@ public OnPlayerConnect(playerid)
     format(DialogString, sizeof DialogString, "%s", reg1);
 	ShowPlayerDialog(playerid,1234, DIALOG_STYLE_MSGBOX,"Introduction...", DialogString,"Accept","Refuse");
 //===================================[MAPICONS]=================================
-	SetPlayerMapIcon(playerid, 1, 597.559509, -1249.448608, 18.307994, 52, 1);
-	SetPlayerMapIcon(playerid, 2, 529.425354, -1293.921752, 17.242187, 55, 1);
-	SetPlayerMapIcon(playerid, 3, 2127.629394, -1151.914794, 23.988607, 55, 1);
-	SetPlayerMapIcon(playerid, 4, 1612.057739, -1892.647338, 13.477849, 55, 1);
-	SetPlayerMapIcon(playerid, 5, 2102.669677, -1807.184570, 13.494323, 29, 1);
-	SetPlayerMapIcon(playerid, 6, 2218.005126, -1168.782226, 25.655542, 31, 1);
-	SetPlayerMapIcon(playerid, 7, 2229.195556, -1722.237670, 13.492409, 54, 1);
-	SetPlayerMapIcon(playerid, 8, 2176.778076, -1808.995361, 13.314004, 31, 1);
-	SetPlayerMapIcon(playerid, 9, 1552.876464, -1675.246948, 15.951610, 30, 1);
-	SetPlayerMapIcon(playerid, 10, 1481.554321, -1769.964111, 18.725217, 32, 1);
-	SetPlayerMapIcon(playerid, 11, 1931.436523, -1775.963378, 13.387728, 17, 1);
-	SetPlayerMapIcon(playerid, 12, 1832.088745, -1842.122924, 13.516613, 17, 1);
-	SetPlayerMapIcon(playerid, 13, 1834.615966, -1682.229736, 13.356820, 49, 1);
-	SetPlayerMapIcon(playerid, 14, 1804.492553, -1574.485961, 13.355642, 30, 1);
-	SetPlayerMapIcon(playerid, 15, 330.078857, -1518.715820, 35.798629, 30, 1);
-	SetPlayerMapIcon(playerid, 16, 212.736221, 1903.069580, 18.079984, 30, 1);
-	SetPlayerMapIcon(playerid, 17, 1383.189453, 465.504455, 20.192749, 17, 1);
-	SetPlayerMapIcon(playerid, 18, 1365.520019, 249.286941, 19.257095, 29, 1);
-	SetPlayerMapIcon(playerid, 19, 1315.100585, -899.391479, 39.282302, 17, 1);
-	SetPlayerMapIcon(playerid, 20, 2034.685791, -1404.085327, 16.970668, 22, 1);
-	SetPlayerMapIcon(playerid, 21, 1412.8313, -1700.3066, 13.5395, 55, 1);
+	SetPlayerMapIcon(playerid, 1, 5184.2256, -33.8796, 21.7644, 56, 1); // City Hall
+	SetPlayerMapIcon(playerid, 2, 5219.1465, 87.6228, 21.4834, 30, 1); // Police
+	SetPlayerMapIcon(playerid, 3, 5326.7700, 9.8576, 20.4230, 55, 1); // Dealer
 //==============================================================================
 	Textdraw98[playerid] = TextDrawCreate(146.000000, 203.000000, " "); // Tutorial
 	TextDrawBackgroundColor(Textdraw98[playerid], 255);
@@ -2037,6 +1947,12 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			    SendClientMessage(playerid,COLOR_WHITE,"{248B10}Tutorial:{FFFFFF}Use SPACEBAR to continue,SHIFT to go back.");
 			    return 1;
 			}
+		}
+		if(IsPlayerInRangeOfPoint(playerid, 1.0, 5320.5298, 29.5945, 20.6959)) {
+			SetPlayerPos(playerid, 5320.8633, 28.6755, 20.6926);
+		}
+		if(IsPlayerInRangeOfPoint(playerid, 5320.8633, 28.6755, 20.6926) {
+			SetPlayerPos(playerid, 5320.5298, 29.5945, 20.6959);
 		}
 	}
 //==================================ENGINE======================================
