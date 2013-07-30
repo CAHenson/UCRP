@@ -1695,7 +1695,7 @@ public OnPlayerSpawn(playerid)
     if(PlayerInfo[playerid][pFirstJoined] == 0)
 	{
 		//	    new string[512];
-	    gPlayerTutorialing[playerid] = 0;
+	    gPlayerTutorialing[playerid] = 1;
 	    SetPlayerHealth(playerid,100);
 	    SetPlayerPos(playerid,5184.4976,-32.1681,21.7722);
 	    SetPlayerCameraPos(playerid,5184.4976,-32.1681,21.7722);
@@ -1708,7 +1708,7 @@ public OnPlayerSpawn(playerid)
     	SendClientMessage(playerid, COLOR_LIGHTRED, "** This server requires a Login BEFORE spawn (Kicked) **");
         Kick(playerid);
  	}
-	SetPlayerPos(playerid, 5184.4976,-32.1681,21.7722);
+	SetPlayerPos(playerid, 5183.4976,-31.1681,22.7722);
 	SetPlayerInterior(playerid,0);
 	SetPlayerVirtualWorld(playerid, 0);
 	SetOriginalColor(playerid);
