@@ -1591,7 +1591,7 @@ public OnPlayerConnect(playerid)
 	GetPlayerName(playerid, plname, sizeof(plname));
 	PlayerInfo[playerid][pLevel] = 0;
 	PlayerInfo[playerid][pCash] = 0;
-	PlayerInfo[playerid][pDriveLic] = 0;
+	PlayerInfo[playerid][pDriveLic] = 1;
 	PlayerInfo[playerid][pVip] = 0;
 	PlayerInfo[playerid][pAdmin] = 0;
 	PlayerInfo[playerid][pTester] = 0;
@@ -2474,7 +2474,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 			INI_WriteInt(File, "MuteTime", PlayerInfo[playerid][pMuteTime] = 0);
    			new rp = 100000 + random(899999);
 			INI_WriteInt(File, "Ph", PlayerInfo[playerid][pNumber] = rp);
-			INI_WriteInt(File, "DriveLic",PlayerInfo[playerid][pDriveLic] = 0);
+			INI_WriteInt(File, "DriveLic",PlayerInfo[playerid][pDriveLic] = 1);
 			INI_Close(File);
 			SpawnPlayer(playerid);
 			SetPlayerSkin(playerid, PlayerInfo[playerid][pModel]);
