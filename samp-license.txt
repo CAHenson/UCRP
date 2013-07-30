@@ -40,7 +40,7 @@ property of SA-MP.com.
 
 ------------------------------------------------------------------------------------
 
-(c) 2005-2011 SA-MP.com team.
+(c) 2005-2012 SA-MP.com team.
 
 The SA-MP.com team is not affiliated with Rockstar Games, Rockstar North or 
 Take-Two Interactive Software Inc.

@@ -1,4 +1,4 @@
-/*----------------------------------------------------------------------------*-
+/**--------------------------------------------------------------------------**\
 					=======================================
 					 y_groups - Player group abstractions! 
 					=======================================
@@ -18,17 +18,17 @@ Legal:
 	for the specific language governing rights and limitations under the
 	License.
 	
-	The Original Code is the SA:MP script information include.
+	The Original Code is the YSI group include.
 	
 	The Initial Developer of the Original Code is Alex "Y_Less" Cole.
-	Portions created by the Initial Developer are Copyright (C) 2008
+	Portions created by the Initial Developer are Copyright (C) 2011
 	the Initial Developer. All Rights Reserved.
 	
 	Contributors:
-		ZeeX, koolk
+		ZeeX, koolk, JoeBullet/Google63, g_aSlice/Slice
 	
 	Thanks:
-		Peter, Cam - Support.
+		JoeBullet/Google63 - Handy arbitrary ASM jump code using SCTRL.
 		ZeeX - Very productive conversations.
 		koolk - IsPlayerinAreaEx code.
 		TheAlpha - Danish translation.
@@ -43,44 +43,29 @@ Legal:
 		Matite - Pestering me to release it and using it.
 	
 	Very special thanks to:
-		Thiadmer - PAWN.
+		Thiadmer - PAWN, whose limits continue to amaze me!
 		Kye/Kalcor - SA:MP.
 		SA:MP Team past, present and future - SA:MP.
+	
 Version:
-	1.0
+	2.0
 Changelog:
+	21/10/12:
+		Added Group_Get... functions.
+	20/10/12:
+		Pretty much a ground-up API-compatible rewrite.  Shorter and reliabler.
 	29/11/10:
 		First version
--*----------------------------------------------------------------------------*/
-	
-	#undef _inc_y_groupsecond
-	
-	// This is actually the second half of a function!
-	//_GROUP_INIT(group);
-	//_GROUP_MAKE_NAME<Group_...Init>(group);
-	#if YSIM_HAS_MASTER
-		#if YSIM_IS_CLIENT
-		#else
-			#if YSIM_IS_SERVER
-				_GROUP_OPC_IS_CALLED(playerid);
-			#else
-				#if YSIM_IS_STUB
-					#error y_groupsecond called with YSIM_IS_STUB.
-				#else
-					_GROUP_OPC_IS_CALLED(playerid);
-				#endif
-			#endif
-		#endif
-	#else
-		_GROUP_OPC_IS_CALLED(playerid);
-	#endif
-	// This is also NOT a master controlled function as the group master may be
-	// different to a system using the group system's master.
-	#pragma tabsize 4
-	_GROUP_OPC_OTHER_CALLED(playerid);
-}
+</remarks>
+\**--------------------------------------------------------------------------**/
 
-forward _GROUP_OPC_PUBLIC(playerid);
+#undef _inc_y_groupsecond
+
+// This code, having been updated to use the later version of y_hooks,
+// unfortunately no longer has one function spread between two files, which was
+// a very unique (required) code feature.  However this version should be better
+// overall (at least slightly).
+//#include "..\y_hooks"
 
 // This file contains generic code for setting all the stats to do with a single
 // element type.  Groups can be defined for any element (classes, objects etc)
@@ -94,376 +79,609 @@ forward _GROUP_OPC_PUBLIC(playerid);
 	#error Please define _GROUP_MAKE_LIMIT before including y_groups.
 #endif
 
+#if !defined _GROUP_MAKE_TAG
+	#define _GROUP_MAKE_TAG _
+#endif
+
 // Start of the multi-use file.
 static stock
-	BitArray:_GROUP_GLOBAL_NAME<_GROUP_MAKE_LIMIT>,
-	BitArray:_GROUP_GROUP_NAME[MAX_GROUPS]<_GROUP_MAKE_LIMIT>,
-	BitArray:_GROUP_DEFAULTS<_:MAX_GROUPS + 1>,
-	YSI_g_sNextUpdateFunc[32],
-	YSI_g_sNextInitFunc[32],
-	bool:YSI_g_sHasOPC = false;
+	BitArray:_GROUP_GROUP_NAME[_GROUP_MAKE_LIMIT]<_:_MAX_GROUPS_G>,
+	BitArray:_GROUP_DEFAULTS<_:_MAX_GROUPS_G>,
+	BitArray:YSI_g_sEmpty<_:_MAX_GROUPS_G>,
+	_yGI,
+	_yGU,
+	_yGA;
 
-// Initialise permissions for a new player based on the default settings.  This
-// is one of the few places where direct master system intervention is required
-// due to the horrible combination of function naming macros.
-// TODO: Uncomment when the better y_hooks library is integrated.
-
-_GROUP_OPC_OTHER_CALLED(playerid)
-{
-	if (YSI_g_sHasOPC) CallLocalFunction(#_GROUP_OPC_PUBLIC, "i", playerid);
-}
-
-#if YSIM_CLOUD
-	_GROUP_OPC_IS_CALLED(playerid)<>
-	{
-		#pragma unused playerid
-	}
-	
-	_GROUP_OPC_IS_CALLED(playerid)<_YCM:y>
-#else
-	stock _GROUP_OPC_IS_CALLED(playerid)
-#endif
-{
-	P:3(#_GROUP_OPC_IS_CALLED " called in %d", _@);
-	for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
-	{
-		// Set and unset all the global items.
-		_GROUP_SET_PLAYER(j, playerid, Bit_Get(_GROUP_GLOBAL_NAME, j));
-		P:5(#_GROUP_SET_PLAYER ": Set %d %d %d", j, playerid, Bit_Get(_GROUP_GLOBAL_NAME, j));
-	}
-}
-
+// Define the callback chaining for the current 
 #if YSIM_HAS_MASTER
-	#if YSIM_IS_CLIENT
-		#define __GF<%0...%1>[%2](%3)<%4> stock _GROUP_MAKE_NAME<%0...%1>(%3)U@(8,YSIM_CALLER,_@),W@(#@#_GROUP_MAKE_NAME<%0...%1>,#%2#x,%4),U@(8,YSIM_CALLER,-1);stock _GROUP_MAKE_NAME<_%0...%1>(%3)
+	#if _YSIM_IS_CLIENT
+		#define _gchain%0(%2) stock _GROUP_MAKE_NAME<%0...>(%2)
+		
+		// Should never be needed.
+		#define _GROUP_SET_PLAYER _GROUP_MAKE_NAME<_Error_..._Client_Set>
 	#else
-		#if YSIM_IS_SERVER
-			#define __GF<%0...%1>[%2](%3)<%4> forward _GROUP_MAKE_NAME<@%0...%1>(%3);_GROUP_MAKE_NAME<@%0...%1>(%3)_GROUP_MAKE_NAME<%0...%1>(%4);_GROUP_MAKE_NAME<%0...%1>(%3)
+		#if _YSIM_IS_SERVER
+			#define _gchain%0(%2) _GROUP_MAKE_NAME<%0...>(%2);public _GROUP_MAKE_NAME<%0...>(%2);for(J@=1;J@;GROUP_CHAIN?<%0>(%2))
+			#define _GROUP_SET_PLAYER _GROUP_MAKE_NAME<..._SetPlayer>
 		#else
-			#if YSIM_IS_STUB
-				#error y_groupsecond called with YSIM_IS_STUB.
-			#else
-				#define __GF<%0...%1>[%2](%3)<%4> forward _GROUP_MAKE_NAME<@%0...%1>(%3);_GROUP_MAKE_NAME<@%0...%1>(%3)<>{}_GROUP_MAKE_NAME<@%0...%1>(%3)<_YCM:y>_GROUP_MAKE_NAME<%0...%1>(%4);_GROUP_MAKE_NAME<%0...%1>(%3)<>Y@(),W@(#@#_GROUP_MAKE_NAME<%0...%1>,#%2#x,%4),T@();_GROUP_MAKE_NAME<%0...%1>(%3)<_YCM:y>
-			#endif
-		#endif
-	#endif
-#else
-	#define __GF<%0...%1>[%2](%3)<%4> stock _GROUP_MAKE_NAME<%0...%1>(%3)
-#endif
-
-_GROUP_CREATE(group,idx);
-
-#if YSIM_HAS_MASTER
-	#if YSIM_IS_CLIENT
-		// Note: not the same.
-		_GROUP_MAKE_NAME<_yG@Init...>(group,idx)
-	#else
-		#if YSIM_IS_SERVER
-			_GROUP_CREATE(group,idx)
-		#else
-			#if !YSIM_IS_STUB
-				_GROUP_CREATE(group,idx)<>
-				{
-					P:3(#_GROUP_MAKE_NAME<@yG_Init...> " called in %d", _@);
-					if (group == -1)
-					{
-						YSI_g_sHasOPC = funcidx(#_GROUP_OPC_PUBLIC) != -1;
-						P:3(#_GROUP_OPC_PUBLIC " does%s exist", YSI_g_sHasOPC ? ("") : ("not"));
-						new
-							a = Scripting_GetPublic(idx >>> 16, YSI_g_sNextUpdateFunc, "@yG_Upd"),
-							b = Scripting_GetPublic(idx & 0xFFFF, YSI_g_sNextInitFunc, "@yG_Init");
-						if (b)
-						{
-							CallLocalFunction(YSI_g_sNextInitFunc, "ii", -1, (a << 16) | b);
-						}
-					}
-				}
+			#if _YSIM_IS_STUB
+				#define _gchain%0(%2) stock _GROUP_MAKE_NAME<%0...>(%2)
 				
-				_GROUP_CREATE(group,idx)<_YCM:y>
+				// Because of the interaction between the various things that
+				// the groups and master systems this will NEVER be called in a
+				// stub script - and if it is we now get a nice compile-time
+				// error telling us so!  It may, however, prove difficult to
+				// trace!
+				#define _GROUP_SET_PLAYER _GROUP_MAKE_NAME<_Error_..._Stub_Set>
+			#else
+				#define _gchain%0(%2) _GROUP_MAKE_NAME<%0...>(%2);public _GROUP_MAKE_NAME<%0...>(%2)<>GROUP_CHAIN?<%0>(%2);public _GROUP_MAKE_NAME<%0...>(%2)<_YCM:y>for(J@=1;J@;GROUP_CHAIN?<%0>(%2))
+				
+				#define _GROUP_SET_PLAYER _GROUP_MAKE_NAME<..._SetPlayer>
 			#endif
 		#endif
 	#endif
 #else
-	_GROUP_CREATE(group,idx)
+	#define _gchain%0(%2) _GROUP_MAKE_NAME<%0...>(%2);public _GROUP_MAKE_NAME<%0...>(%2);for(J@=1;J@;GROUP_CHAIN?<%0>(%2))
+	
+	#define _GROUP_SET_PLAYER _GROUP_MAKE_NAME<..._SetPlayer>
 #endif
+
+/**--------------------------------------------------------------------------**\
+<summary>Group_FU</summary>
+<param name="playerid">Player to check.</param>
+<param name="el">Element to show or hide.</param>
+<param name="previous">(p) The old state of affairs.</param>
+<param name="current">(c) The new state of affairs.</param>
+<param name="reference">(r) What to compare changes to.</param>
+<returns>
+	-
+</returns>
+<remarks>
+	I did have a good reason for calling this "FU", but I forgot it!  Anyway,
+	the state of some groups has changed - either a player's groups or an
+	elements groups have changed.  If the player could previously see the
+	element but now can't, hide it.  If the player previously couldn't see it
+	but now can, show it.  If there is no change do nothing.  The old version of
+	this library would just re-show the element even if they could already see
+	it, but this was a bad design as it could incur large overheads in other
+	libraries when they had to do IO to enable or disable something for a
+	player.
+	
+	The change can be in either the player's groups or the element's groups,
+	either way this code will work regardless.
+	
+	Oh yeah, "FU" means "Full Update".
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+static stock Group_FU(playerid, el, Bit:p[], Bit:c[], Bit:r[])
 {
-	P:3(#_GROUP_MAKE_NAME<@yG_Init...> " called in %d", _@);
-	if (group == -1)
+	// "_GROUPS_CHECK" is a macro that expands to a massive unrolled "if"
+	// statement checking up to 512 groups at once.  Any more than that and this
+	// code resorts to a loop instead.  I say "at once"; it does 32 AT ONCE
+	// (as in truly in parallel), starting with the most likely match (the
+	// default group that every player and every element is usually in), and
+	// loops over all the groups in 32 group chunks.  When I say "loop", this
+	// could be in the form of a huge "if" statement with every iteration put in
+	// explicitly.
+	// r = Reference (valid groups).
+	// c = Current (new groups).
+	// p = Previous (old groups).
+	_GROUPS_CHECK_ANY(p,r)
 	{
-		Bit_SetAll(_GROUP_GLOBAL_NAME, true, bits<_GROUP_MAKE_LIMIT>);
-		Bit_Let(_GROUP_DEFAULTS, _:MAX_GROUPS);
-		// Initialise the next item
-		YSI_g_sHasOPC = funcidx(#_GROUP_OPC_PUBLIC) != -1;
-		P:3(#_GROUP_OPC_PUBLIC " does%s exist", YSI_g_sHasOPC ? ("") : (" not"));
-		new
-			a = Scripting_GetPublic(idx >>> 16, YSI_g_sNextUpdateFunc, "@yG_Upd"),
-			b = Scripting_GetPublic(idx & 0xFFFF, YSI_g_sNextInitFunc, "@yG_Init");
-		if (b)
+		// Could previously see this thing.  The thing about this design is that
+		// it can (best case) take just 2 comparisons to end - and that should
+		// be the common case!
+		_GROUPS_CHECK_ANY(c,r)
 		{
-			CallLocalFunction(YSI_g_sNextInitFunc, "ii", -1, (a << 16) | b);
+			// Still can.
+			return;
 		}
+		// Now can't.
+		_GROUP_SET_PLAYER(_GROUP_MAKE_TAG:el, playerid, false);
+		return;
 	}
-	else if (group < _:MAX_GROUPS)
+	// Couldn't see it before.
+	_GROUPS_CHECK_ANY(c,r)
 	{
-		// This is called when a new group is created, it sets the default default
-		// values - i.e. sets everything to true.
-		Bit_SetAll(_GROUP_GROUP_NAME[Group:group], false, bits<_GROUP_MAKE_LIMIT>);
-		Bit_Vet(_GROUP_DEFAULTS, group);
-		if (YSI_g_sNextInitFunc[0])
-		{
-			CallLocalFunction(YSI_g_sNextInitFunc, "ii", group, -1);
-		}
+		// They have whatever this thing is.  Note that this may be called
+		// MULTIPLE times for an element, without anything actually changing.
+		// I.e. this could be set to "true" repeatedly while never being set
+		// to "false".
+		_GROUP_SET_PLAYER(_GROUP_MAKE_TAG:el, playerid, true);
+		// We use "return" here because "_GROUPS_CHECK_ANY" MAY be a loop.
+		return;
 	}
 }
+
+/**--------------------------------------------------------------------------**\
+<summary>_yGI</summary>
+<param name="&ni">Next init function variable as returned by y_amx.</param>
+<param name="&na">Next add function variable as returned by y_amx.</param>
+<param name="&nu">Next update function variable as returned by y_amx.</param>
+<returns>
+	-
+</returns>
+<remarks>
+	This function is called when the group system first starts up to initialise
+	the global group and all the various function pointers.  The way the
+	"_gchain" macro works means that the fact that "ni" etc are references is
+	irrelevant; however, it does make the code LOOK much nicer and like
+	assigning to the variables does have some wider meaning.
+	
+	If this is called with "ni = -1", it is special code to temporarilly set or
+	restore the defaults for use with the "GROUP_ADD" macro.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+_gchain _yGI(&ni, &na, &nu)
+{
+	if (ni == -1)
+	{
+		static
+			BitArray:sStack<_MAX_GROUPS_G>;
+		if (na)
+		{
+			//printf("PUSH %d", nu);
+			// Called to "push" the default settings.
+			sStack = _GROUP_DEFAULTS;
+			//printf("ONE %d", nu);
+			_GROUP_DEFAULTS = YSI_g_cEmptyGroups;
+			//printf("TWO %d", nu);
+			Bit_Let(_GROUP_DEFAULTS, nu);
+			//printf("THREE %d", nu);
+			for (new i = 0; i != bits<_MAX_GROUPS_G>; ++i)
+			{
+				YSI_g_sEmpty[i] = ~_GROUP_DEFAULTS[i];
+			}
+			//printf("DONE %d", nu);
+		}
+		else
+		{
+			//printf("POP");
+			// Called to "pop" the default settings.
+			_GROUP_DEFAULTS = sStack;
+			YSI_g_sEmpty = YSI_g_cEmptyGroups;
+		}
+	}
+	else
+	{
+		P:4(#_GROUP_MAKE_NAME<_yGI...> " called: %i, %i, %i", ni, na, nu);
+		// Enable the default group.  If I'm right, this way is actually better than
+		// using variables as in most cases because "_MAX_GROUPS" is a constant so
+		// all the other maths will be constant.
+		Bit_Let(_GROUP_DEFAULTS, _MAX_GROUPS);
+		// Don't need this loop anymore, it is done for every element individually.
+		//for (new i = 0; i != _GROUP_MAKE_LIMIT; ++i)
+		//{
+		//	// Basically, enable everything in the default group.
+		//	Bit_Let(_GROUP_GROUP_NAME[i], _MAX_GROUPS);
+		//}
+		// Set up the function chaining.
+		ni = AMX_GetPublicPointerPrefix(ni, _yGI, _A<_yGI>);
+		na = AMX_GetPublicPointerPrefix(na, _yGA, _A<_yGA>);
+		nu = AMX_GetPublicPointerPrefix(nu, _yGU, _A<_yGU>);
+	}
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>Group_Exclusive...</summary>
+<param name="Group:g">Group to add this to.</param>
+<param name="_GROUP_MAKE_TAG:el">Element to add.</param>
+<returns>
+	-
+</returns>
+<remarks>
+	Add this element to ONLY this group and remove it from any others it might
+	already be in.  This is basically a simplified version of "GROUP_ADD".
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_Exclusive...(Group:g,_GROUP_MAKE_TAG:el);
+
+gglobal Group_Exclusive...(Group:g,_GROUP_MAKE_TAG:el)
+{
+	if (GROUP_MASK <= g <= GROUP_GLOBAL)
+	{
+		GROUP_FIX(g);
+		YSI_gTempGroups = _GROUP_DEFAULTS;
+		_GROUP_DEFAULTS = YSI_g_cEmptyGroups;
+		Bit_Let(_GROUP_DEFAULTS, _:g);
+		for (new i = 0; i != bits<_MAX_GROUPS_G>; ++i)
+		{
+			YSI_g_sEmpty[i] = ~_GROUP_DEFAULTS[i];
+		}
+		_GROUP_INITIALISE(el);
+		_GROUP_DEFAULTS = YSI_gTempGroups;
+		YSI_g_sEmpty = YSI_g_cEmptyGroups;
+		return 1;
+	}
+	return 0;
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>_yGA</summary>
+<param name="&group">The group that was just created.</param>
+<returns>
+	-
+</returns>
+<remarks>
+	The given group was just created, loop over all elements and make sure they
+	are NOT in this group - only the global group has a "default default" of
+	true.  We don't need to update any players with this as no-one will ever be
+	in a brand new group.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+_gchain _yGA(&group)
+{
+	P:4(#_GROUP_MAKE_NAME<_yGA...> " called: %i", _:group);
+	// Adding a new group is now a lot harder than it was before, but on the
+	// other hand, adding and using elements is vastly simpler so that's OK.
+	new
+		s = Bit_Slot(group),
+		Bit:m = ~Bit_Mask(group);
+	// Set the default "contains" for this group to false.
+	_GROUP_DEFAULTS[s] &= m;
+	// Disable every element in this group.
+	for (new i = 0; i != _GROUP_MAKE_LIMIT; ++i)
+	{
+		_GROUP_GROUP_NAME[i][s] &= m;
+	}
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>_yGU</summary>
+<param name="&pid">The player who joined or left groups.</param>
+<param name="Bit:p[]">Their previous groups.</param>
+<param name="Bit:c[]">Their new groups.</param>
+<returns>
+	-
+</returns>
+<remarks>
+	The player "pid" just joined or left a group (or groups - can do multiple).
+	Update their visibility accordingly.  This function is ONLY called if there
+	is a CHANGE - earlier functions confirm that they weren't already in (or
+	not) this group(s) before the call.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+_gchain _yGU(&pid, Bit:p[], Bit:c[])
+{
+	P:4(#_GROUP_MAKE_NAME<_yGU...> " called: %i, %s, %s", pid, Bit_Display(p, bits<_MAX_GROUPS_G>), Bit_Display(c, bits<_MAX_GROUPS_G>));
+	// This code loops over every "thing" controlled by this script.  For every
+	// one it checks to see if the player can or can't see something that they
+	// previously could or couldn't see.  If their ability to see it has
+	// changed then the "_GROUP_SET_PLAYER" function in the controlling library
+	// is called to do the actual internal function of updating their state.
+	for (new el = 0; el != _GROUP_MAKE_LIMIT; ++el)
+	{
+		Group_FU(pid, el, p, c, _GROUP_GROUP_NAME[el]);
+	}
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>_GROUP_INITIALISE</summary>
+<param name="x">The element that was added (maybe).</param>
+<param name="s">Was the element added or removed?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	The name is a macro, so this function isn't actually called this.  This is
+	called when a new element is created, and as such it is NOT chained to other
+	parts of the groups system because each part handles one type of element.
+	Loop through all players and set up the element for them if they are in a
+	group that this is also in by default.
+	
+	If x is "_GROUP_MAKE_LIMIT" then this is the test used in OnPlayerConnect in
+	various libraries to see if the groups system exists, and if not locally
+	initialise the player instead of leaving it up to this system.
+</remarks>
+\**--------------------------------------------------------------------------**/
 
 #if !defined _YSI_GROUPS_FIRST_HALF
-	forward bool:_GROUP_INITIALISE(x = _GROUP_MAKE_LIMIT);
+	forward bool:_GROUP_INITIALISE(_GROUP_MAKE_TAG:x = _GROUP_MAKE_TAG:_GROUP_MAKE_LIMIT);
 #endif
 
-stock bool:_GROUP_INITIALISE(x = _GROUP_MAKE_LIMIT) <YSI_has_groups:y>
+stock bool:_GROUP_INITIALISE(_GROUP_MAKE_TAG:x = _GROUP_MAKE_TAG:_GROUP_MAKE_LIMIT) <YSI_has_groups:y>
 {
+	P:4(#_GROUP_INITIALISE " called: %i", x);
 	// A new item has been added to the system - update all players according to
 	// the default settings for a group.
-	//_GROUP_UPDATE_ALL(_GROUP_LOCAL_NAME);
-	if (x != _GROUP_MAKE_LIMIT)
+	if (x != _GROUP_MAKE_TAG:_GROUP_MAKE_LIMIT)
 	{
-		P:3(#_GROUP_INITIALISE "<YSI_has_groups:y> called in %d", _@);
-		_GROUP_MAKE_NAME<Group_UpdateAll...>(x, true);
+		//static
+		//	BitArray:sEmpty<_MAX_GROUPS_G>;
+		//printf("%d %s %s", _:x, Bit_Display(_GROUP_DEFAULTS), Bit_Display(YSI_g_sEmpty));
+		_GROUP_GROUP_NAME[_:x] = _GROUP_DEFAULTS;
+		foreach (new playerid : Player)
+		{
+			// Uses "YSI_g_sEmpty" instead of a truly blank variable so that we
+			// can ensure that NO other groups have this element when we use the
+			// "GROUP_ADD" macro.
+			Group_FU(playerid, _:x, YSI_g_sEmpty, _GROUP_DEFAULTS, YSI_gGroupPlayers[playerid]);
+		}
 	}
 	return true;
 }
 
-// Called to set all players to a new element.  Can ignore defaults for
-// specialised setups such as classes.
-__GF<Group_UpdateAll...>[i](_GROUP_LOCAL_NAME,bool:d)<_GROUP_LOCAL_NAME,d>
-{
-	// Set the permissions from the defaults for each groups.
-	new
-		s = Bit_Slot(_GROUP_LOCAL_NAME),
-		Bit:m = Bit_Mask(_GROUP_LOCAL_NAME),
-		Bit:v = ~m;
-	if (d)
-	{
-		for (new Group:i; i != MAX_GROUPS; ++i)
-		{
-			if (Bit_Get(_GROUP_DEFAULTS, i)) _GROUP_GROUP_NAME[i][s] |= m;
-			else _GROUP_GROUP_NAME[i][s] &= v;
-		}
-		// Set the default settings.
-		if (Bit_Get(_GROUP_DEFAULTS, MAX_GROUPS)) _GROUP_GLOBAL_NAME[s] |= m;
-		else _GROUP_GLOBAL_NAME[s] &= v;
-		// Now update all the existing players.
-		foreach (Player, i) _GROUP_MAKE_NAME<Group_UpdatePlayer...>(_GROUP_LOCAL_NAME, i);
-	}
-	else
-	{
-		P:3(#_GROUP_MAKE_NAME<Group_UpdateAll...> " called as 0");
-		for (new Group:i; i != MAX_GROUPS; ++i) _GROUP_GROUP_NAME[i][s] &= v;
-		_GROUP_GLOBAL_NAME[s] &= v;
-	}
-}
+/**--------------------------------------------------------------------------**\
+<summary>Group_Set...Default</summary>
+<param name="Group:g">Group to set for.</param>
+<param name="bool:s">Set or unset?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	If "s" is true, then all elements are added to this group (i.e. the default
+	is set to true and all previous settings are wiped out).  If it is false
+	then all elements are removed and a full update is done.
+</remarks>
+\**--------------------------------------------------------------------------**/
 
-static stock _GROUP_MAKE_NAME<Group_UpdatePlayer...>(_GROUP_LOCAL_NAME,playerid)
-{
-	if (Bit_Get(_GROUP_GLOBAL_NAME, _GROUP_LOCAL_NAME))
-	{
-		_GROUP_SET_PLAYER(_GROUP_LOCAL_NAME, playerid, true);
-		return;
-	}
-	new
-		ps = Bit_Slot(playerid),
-		Bit:pm = Bit_Mask(playerid),
-		es = Bit_Slot(_GROUP_LOCAL_NAME),
-		Bit:em = Bit_Mask(_GROUP_LOCAL_NAME);
-	for (new Group:i; i != MAX_GROUPS; ++i)
-	{
-		if (_Group_IsActive(i) && YSI_gGroupPlayers[i][ps] & pm && _GROUP_GROUP_NAME[i][es] & em)
-		//if (Group_IsActive(i) && Group_HasPlayer(i, playerid) && Bit_Get(_GROUP_GROUP_NAME[i], _GROUP_LOCAL_NAME))
-		{
-			_GROUP_SET_PLAYER(_GROUP_LOCAL_NAME, playerid, true);
-			return;
-		}
-	}
-	_GROUP_SET_PLAYER(_GROUP_LOCAL_NAME, playerid, false);
-}
+gforeign Group_Set...Default(Group:g,bool:s);
 
-_GROUP_UPDATE_PLAYER(playerid, group, set);
-
-#if YSIM_HAS_MASTER
-	#if YSIM_IS_CLIENT
-		// Note: not the same.
-		_GROUP_MAKE_NAME<_yG@Upd...>(playerid, group, set)
-	#else
-		#if YSIM_IS_SERVER
-			_GROUP_UPDATE_PLAYER(playerid, group, set)
-		#else
-			#if !YSIM_IS_STUB
-				_GROUP_UPDATE_PLAYER(playerid, group, set)<>
-				{
-					if (YSI_g_sNextUpdateFunc[0])
-					{
-						CallLocalFunction(YSI_g_sNextUpdateFunc, "iii", playerid, group, set);
-					}
-				}
-				
-				_GROUP_UPDATE_PLAYER(playerid, group, set)<_YCM:y>
-			#endif
-		#endif
-	#endif
-#else
-	_GROUP_UPDATE_PLAYER(playerid, group, set)
-#endif
+gglobal Group_Set...Default(Group:g,bool:s)
 {
-	if (set)
+	P:2(#_GROUP_MAKE_NAME<Group_Set...Default> " called: %i, %i", _:g, s);
+	if (GROUP_MASK <= g <= GROUP_GLOBAL)
 	{
-		// Joined a group - add everything they will need.
-		for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
+		// There is now NO validity check for reasons of distruibution.
+		GROUP_FIX(g);
+		new
+			slot = Bit_Slot(g),
+			Bit:mask = Bit_Mask(g),
+			Iterator:GP<MAX_PLAYERS>;
+		foreach (new playerid : Player)
 		{
-			if (Bit_Get(_GROUP_GROUP_NAME[group], j))
+			// Do this check here so it is only done once per player.  This is a
+			// good argument for moving iterators to be duplicated in every
+			// script; however, the default "Group()" iterator implementation is
+			// a function, not a standard iterator - actually it now isn't...
+			if (YSI_gGroupPlayers[playerid][slot] & mask)
 			{
-				_GROUP_SET_PLAYER(j, playerid, true);
+				// Make a fast local iterator of all the players.
+				Iter_Add(GP, playerid);
 			}
 		}
-	}
-	else
-	{
-		// Left a group - full update.
-		for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
-		{
-			_GROUP_MAKE_NAME<Group_UpdatePlayer...>(j, playerid);
-		}
-	}
-}
-
-__GF<Group_Set...Default>[ii](Group:g,bool:s)<g,s>
-{
-	GROUP_FIX(g);
-	if (g == GROUP_GLOBAL & ~GROUP_MASK)
-	{
-		_GROUP_MAKE_NAME<Group_SetGlobal...Default>(s);
-	}
-	else if (_Group_IsValid(g))
-	{
-		Bit_SetAll(_GROUP_GROUP_NAME[g], s, bits<_GROUP_MAKE_LIMIT>);
+		static
+			BitArray:sNext<_MAX_GROUPS_G>;
 		if (s)
 		{
 			Bit_Let(_GROUP_DEFAULTS, _:g);
-			foreach (Player, i)
+			for (new el = 0; el != _GROUP_MAKE_LIMIT; ++el)
 			{
-				if (_Group_HasPlayer(g, i))
+				sNext = _GROUP_GROUP_NAME[el];
+				if (sNext[slot] & mask)
 				{
-					for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
-					{
-						_GROUP_SET_PLAYER(j, i, true);
-					}
+					continue;
 				}
+				// Is this element NOT in the current group?
+				Bit_Let(sNext, _:g);
+				foreach (new playerid : GP)
+				{
+					Group_FU(playerid, el, _GROUP_GROUP_NAME[el], sNext, YSI_gGroupPlayers[playerid]);
+				}
+				_GROUP_GROUP_NAME[el] = sNext;
 			}
 		}
 		else
 		{
 			Bit_Vet(_GROUP_DEFAULTS, _:g);
-			foreach (Player, i)
+			for (new el = 0; el != _GROUP_MAKE_LIMIT; ++el)
 			{
-				if (_Group_HasPlayer(g, i))
+				sNext = _GROUP_GROUP_NAME[el];
+				if (!(sNext[slot] & mask))
 				{
-					for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
-					{
-						_GROUP_MAKE_NAME<Group_UpdatePlayer...>(j, i);
-					}
+					continue;
 				}
+				// Is this element in the current group?
+				Bit_Vet(sNext, _:g);
+				foreach (new playerid : GP)
+				{
+					Group_FU(playerid, el, _GROUP_GROUP_NAME[el], sNext, YSI_gGroupPlayers[playerid]);
+				}
+				_GROUP_GROUP_NAME[el] = sNext;
 			}
 		}
+		return 1;
 	}
+	return 0;
 }
 
-__GF<Group_SetGlobal...Default>[i](bool:s)<s>
+/**--------------------------------------------------------------------------**\
+<summary>Group_SetGlobal...Default</summary>
+<param name="bool:s">Set or unset?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	If "s" is true, then all elements are added to the global group (i.e. the
+	default is set to true and all previous settings are wiped out).  If it is
+	false then all elements are removed and a full update is done.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_SetGlobal...Default(bool:s);
+
+gglobal Group_SetGlobal...Default(bool:s)
 {
-	Bit_SetAll(_GROUP_GLOBAL_NAME, s, bits<_GROUP_MAKE_LIMIT>);
-	if (s)
-	{
-		Bit_Let(_GROUP_DEFAULTS, _:MAX_GROUPS);
-		foreach (Player, i)
-		{
-			for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
-			{
-				_GROUP_SET_PLAYER(j, i, true);
-			}
-		}
-	}
-	else
-	{
-		Bit_Vet(_GROUP_DEFAULTS, _:MAX_GROUPS);
-		foreach (Player, i)
-		{
-			for (new j = 0; j != _GROUP_MAKE_LIMIT; ++j)
-			{
-				_GROUP_MAKE_NAME<Group_UpdatePlayer...>(j, i);
-			}
-		}
-	}
+	P:2(#_GROUP_MAKE_NAME<Group_SetGlobal...Default> " called: %i", s);
+	return _GROUP_MAKE_NAME<Group_Set...Default>(GROUP_GLOBAL, s);
 }
 
-__GF<Group_SetGlobal...>[ii](_GROUP_LOCAL_NAME,bool:s)<_GROUP_LOCAL_NAME,s>
+/**--------------------------------------------------------------------------**\
+<summary>Group_Set...New</summary>
+<param name="Group:g">Group to set for.</param>
+<param name="bool:s">Set or unset?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	Similar to "Group_Set...Default", but doesn't reset all existing elements,
+	just sets the permissions for any future items.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_Set...New(Group:g,bool:s);
+
+gglobal Group_Set...New(Group:g,bool:s)
 {
-	// Set wether the global group can use this item.
-	//Bit_Set(_GROUP_GLOBAL_NAME, _GROUP_LOCAL_NAME, set, bits<_GROUP_MAKE_LIMIT>);
-	if (s)
+	P:2(#_GROUP_MAKE_NAME<Group_Set...New> " called: %i, %i", _:g, s);
+	if (GROUP_MASK <= g <= GROUP_GLOBAL)
 	{
-		Bit_Let(_GROUP_GLOBAL_NAME, _GROUP_LOCAL_NAME);
-		foreach (Player, i)
-		{
-			_GROUP_SET_PLAYER(_GROUP_LOCAL_NAME, i, true);
-		}
+		// There is now NO validity check for reasons of distruibution.
+		Bit_Set(_GROUP_DEFAULTS, _:GROUP_TEMP_FIX(g), s);
+		return 1;
 	}
-	else
-	{
-		Bit_Vet(_GROUP_GLOBAL_NAME, _GROUP_LOCAL_NAME);
-		foreach (Player, i)
-		{
-			_GROUP_MAKE_NAME<Group_UpdatePlayer...>(_GROUP_LOCAL_NAME, i);
-		}
-	}
+	return 0;
 }
 
-__GF<Group_Set...>[iii](Group:g,_GROUP_LOCAL_NAME,bool:s)<g,_GROUP_LOCAL_NAME,s>
+/**--------------------------------------------------------------------------**\
+<summary>Group_SetGlobal...New</summary>
+<param name="bool:s">Set or unset?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	All elements created FROM THIS POINT ON will have this default setting.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_SetGlobal...New(bool:s);
+
+gglobal Group_SetGlobal...New(bool:s)
 {
+	P:2(#_GROUP_MAKE_NAME<Group_SetGlobal...New> " called: %i", s);
+	return _GROUP_MAKE_NAME<Group_Set...New>(GROUP_GLOBAL, s);
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>Group_Set...</summary>
+<param name="Group:g">Group to set for.</param>
+<param name="el">Element to set.</param>
+<param name="bool:s">Set or unset?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	If "s" is true, then one element is added to the current group.  False it is
+	removed.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_Set...(Group:g,_GROUP_MAKE_TAG:el,bool:s);
+
+gglobal Group_Set...(Group:g,_GROUP_MAKE_TAG:el,bool:s)
+{
+	P:2(#_GROUP_MAKE_NAME<Group_Set...> " called: %i, %i, %i", _:g, _:el, s);
 	// Set wether a group can use this item.
-	if (0 <= _GROUP_LOCAL_NAME < _GROUP_MAKE_LIMIT)
+	if (0 <= _:el < _GROUP_MAKE_LIMIT && GROUP_MASK <= g <= GROUP_GLOBAL)
 	{
+		// There is now NO validity check for reasons of distruibution.
 		GROUP_FIX(g);
-		if (g == GROUP_GLOBAL & ~GROUP_MASK)
+		new
+			slot = Bit_Slot(g),
+			Bit:mask = Bit_Mask(g);
+		//static
+		//	BitArray:sNext<_MAX_GROUPS_G>;
+		if (s)
 		{
-			//_GROUP_GLOBAL_FUNC(_GROUP_LOCAL_NAME, set);
-			_GROUP_MAKE_NAME<Group_SetGlobal...>(_GROUP_LOCAL_NAME, s);
+			YSI_gTempGroups = _GROUP_GROUP_NAME[_:el];
+			if (YSI_gTempGroups[slot] & mask)
+			{
+				// No point adding an element to a group that it is already in.
+				return 1;
+			}
+			// Is this element NOT in the current group?
+			Bit_Let(YSI_gTempGroups, _:g);
 		}
-		else if (_Group_IsValid(g))
+		else
 		{
-			//Bit_Set(_GROUP_GROUP_NAME[group], _GROUP_LOCAL_NAME, set, bits<_GROUP_MAKE_LIMIT>);
-			if (s)
+			YSI_gTempGroups = _GROUP_GROUP_NAME[_:el];
+			if (!(YSI_gTempGroups[slot] & mask))
 			{
-				Bit_Let(_GROUP_GROUP_NAME[g], _GROUP_LOCAL_NAME);
-				foreach (Player, i)
-				{
-					if (_Group_HasPlayer(g, i))
-					{
-						_GROUP_SET_PLAYER(_GROUP_LOCAL_NAME, i, true);
-					}
-				}
+				return 1;
 			}
-			else
+			// Is this element in the current group?
+			Bit_Vet(YSI_gTempGroups, _:g);
+		}
+		foreach (new playerid : Player)
+		{
+			if (YSI_gGroupPlayers[playerid][slot] & mask)
 			{
-				Bit_Vet(_GROUP_GROUP_NAME[g], _GROUP_LOCAL_NAME);
-				foreach (Player, i)
-				{
-					if (_Group_HasPlayer(g, i))
-					{
-						//_GROUP_UPDATE(_GROUP_LOCAL_NAME, i);
-						_GROUP_MAKE_NAME<Group_UpdatePlayer...>(_GROUP_LOCAL_NAME, i);
-					}
-				}
+				// The player is in the group in question, so they need a full
+				// update.
+				Group_FU(playerid, _:el, _GROUP_GROUP_NAME[_:el], YSI_gTempGroups, YSI_gGroupPlayers[playerid]);
 			}
 		}
+		_GROUP_GROUP_NAME[_:el] = YSI_gTempGroups;
+		return 1;
 	}
+	return 0;
 }
 
-#undef __GF
+/**--------------------------------------------------------------------------**\
+<summary>Group_SetGlobal...</summary>
+<param name="el">Element to set.</param>
+<param name="bool:s">Set or unset?</param>
+<returns>
+	-
+</returns>
+<remarks>
+	If "s" is true, then one element is added to the global group.  False it is
+	removed.
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_SetGlobal...(_GROUP_MAKE_TAG:el,bool:s);
+
+gglobal Group_SetGlobal...(_GROUP_MAKE_TAG:el,bool:s)
+{
+	P:2(#_GROUP_MAKE_NAME<Group_SetGlobal...> " called: %i, %i", _:el, s);
+	return _GROUP_MAKE_NAME<Group_Set...>(GROUP_GLOBAL, el, s);
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>Group_Get...</summary>
+<param name="Group:g">Group to get from.</param>
+<param name="el">Element to get.</param>
+<returns>
+	bool: Does the group have the element?
+</returns>
+<remarks>
+	-
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign bool:Group_Get...(Group:g,_GROUP_MAKE_TAG:el);
+
+gglobal bool:Group_Get...(Group:g,_GROUP_MAKE_TAG:el)
+{
+	P:2(#_GROUP_MAKE_NAME<Group_Get...> " called: %i, %i", _:g, _:el);
+	return (0 <= _:el < _GROUP_MAKE_LIMIT && GROUP_MASK <= g <= GROUP_GLOBAL && Bit_Get(_GROUP_GROUP_NAME[_:el], _:GROUP_TEMP_FIX(g)));
+}
+
+/**--------------------------------------------------------------------------**\
+<summary>Group_GetGlobal...</summary>
+<param name="el">Element to get.</param>
+<returns>
+	bool: Does the global group have the element?
+</returns>
+<remarks>
+	-
+</remarks>
+\**--------------------------------------------------------------------------**/
+
+gforeign Group_GetGlobal...(_GROUP_MAKE_TAG:el);
+
+gglobal Group_GetGlobal...(_GROUP_MAKE_TAG:el)
+{
+	P:2(#_GROUP_MAKE_NAME<Group_GetGlobal...> " called: %i", _:el);
+	return _GROUP_MAKE_NAME<Group_Get...>(GROUP_GLOBAL, el);
+}
+
+#undef _GROUP_MAKE_TAG
+#undef _gchain
+#undef _GROUP_SET_PLAYER

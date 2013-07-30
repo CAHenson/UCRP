@@ -1,11 +1,12 @@
-/*----------------------------------------------------------------------------*-
+/**--------------------------------------------------------------------------**\
 					  ====================================
 					   y_timers - Run timers efficiently. 
 					  ====================================
 Description:
 	Sets up repeating timers without requiring any SetTimers and arranges them
 	so that they will be very unlikely to meet (at least for a long time) using
-	scheduling algorithms to get timers with the same period to be offset.
+	scheduling algorithms to get timers with the same period to be offset.  Also
+	fixes arrays and strings in timers so they can be passed properly.
 Legal:
 	Version: MPL 1.1
 	
@@ -19,17 +20,17 @@ Legal:
 	for the specific language governing rights and limitations under the
 	License.
 	
-	The Original Code is the SA:MP script information include.
+	The Original Code is the YSI timers include.
 	
 	The Initial Developer of the Original Code is Alex "Y_Less" Cole.
-	Portions created by the Initial Developer are Copyright (C) 2008
+	Portions created by the Initial Developer are Copyright (C) 2011
 	the Initial Developer. All Rights Reserved.
 	
 	Contributors:
-		ZeeX, koolk
+		ZeeX, koolk, JoeBullet/Google63, g_aSlice/Slice
 	
 	Thanks:
-		Peter, Cam - Support.
+		JoeBullet/Google63 - Handy arbitrary ASM jump code using SCTRL.
 		ZeeX - Very productive conversations.
 		koolk - IsPlayerinAreaEx code.
 		TheAlpha - Danish translation.
@@ -44,12 +45,17 @@ Legal:
 		Matite - Pestering me to release it and using it.
 	
 	Very special thanks to:
-		Thiadmer - PAWN.
+		Thiadmer - PAWN, whose limits continue to amaze me!
 		Kye/Kalcor - SA:MP.
 		SA:MP Team past, present and future - SA:MP.
+	
 Version:
-	1.0
+	2.0
 Changelog:
+	29/04/11:
+		Added version 2 of the code with more advanced options.
+	21/03/11:
+		Added debug printing to timer functions.  Uses "P:C" in compiling.
 	26/10/10:
 		Officially added simple calling.
 		Added "delay" functions.
@@ -60,206 +66,28 @@ Changelog:
 		Added pickups.
 	03/08/07:
 		First version.
--*----------------------------------------------------------------------------*/
+</remarks>
+\**--------------------------------------------------------------------------**/
 
-#include <YSI\internal\y_version>
+// y_uvars
 
-#include <YSI\internal\y_shortfunc>
-
-#include <YSI\y_scripting>
-#include <YSI\y_debug>
-
-//#define Timer:%0[%1](%2) forward @yT_%1_%0();@yT_%1_%0()
-#define Timer:%0[%1](%2) forward @yT_%1_%0();stock %0() @yT_%1_%0();@yT_%1_%0()
-
-#define Delay:%0[%1,%2](%3) stock %0(%3)return O@(#@#%0,%1,0,#%2#x,%3);stock v@%0(_:_o@,%3)return O@(#@#%0,_o@,0,#%2#x,%3);forward @%0(%3);@%0(%3)
-
-#define FixDelay:%0[%1,%2](%3) stock %0(%3)return O@("@_"#%0,%1,0,#%2#x,%3);forward @_%0(%3);@_%0(%3)
-// There's a bug in passing strings to timer functions, so I've remove it.
-//#define Delay@p:%0[%1,%2](%3)<%4> stock %0(%3)return O@(#@#%0,%1,0,#%2,%4);stock v@%0(_o@,%3)return O@(#@#%0,_o@,0,#%2,%4);forward @%0(%3);@%0(%3)
-
-#define skip:%0(%3) @%0(%3)
-#define delay:%0[%1](%3) v@%0(_:%1,%3)
-
-// This defines the number of different periods that timers can have.  This
-// number is a HUGE over-estimate, you would need to have over 256 timers, none
-// of them with the same period, for this number to be too small!
-#define MAX_TIMER_VARIATIONS            (256)
-
-forward Timer_Start(timer, delay);
-
-/*----------------------------------------------------------------------------*-
-Function:
-	OnScriptInit
-Params:
-	-
-Return:
-	-
-Notes:
-	-
--*----------------------------------------------------------------------------*/
-
-#if defined FILTERSCRIPT
-	public OnFilterScriptInit()
-#else
-	public OnGameModeInit()
-#endif
-{
-	new
-		buffer[32],
-		idx = 0,
-		timers[MAX_TIMER_VARIATIONS][2],//[3],
-		periods = 0;
-	// 0 = time, 1 = count, 2 = offset.
-	// First loop - get all the different periods.
-	// Get the list of timers from the list of publics.
-	while ((idx = Scripting_GetPublicFast(idx, buffer, (Scripting_FastString('@', 'y', 'T', '_')))))
-	{
-		// Get the time associated with the timer.  We know this starts at index
-		// position 4, because we always set it to be there.
-		new
-			time = strval(buffer[4]);
-		if (time)
-		{
-			// Valid time, find this in the array.
-			for (new i = 0; ; ++i)
-			{
-				if (i == periods)
-				{
-					timers[i][0] = time;
-					timers[i][1] = 1;
-					++periods;
-					break;
-				}
-				else if (timers[i][0] == time)
-				{
-					++timers[i][1];
-					break;
-				}
-			}
-			if (periods == MAX_TIMER_VARIATIONS)
-			{
-				P:1("*** Internal Error: Timer array full");
-				break;
-			}
-		}
-	}
-	// Group timers with common periods together, for example timers with 1000
-	// and 500ms periods need to be interleaved so they don't run at the same
-	// time very often.  Obviously ANY combination of timers will eventually run
-	// at the same time at some point, but we can reduce this chance.
-	/*for (new i = 0; i != periods; ++i)
-	{
-		new
-			time = timers[i][0];
-		if (timers[i][2])
-		{
-			for (new j = 0; j != i; ++j)
-			{
-				new
-					ct = timers[j][0];
-				if ((time / ct) * ct == time || (ct / time) * time == ct)
-				{
-					// Set the count to the same as the master.
-					timers[i][1] = timers[j][1];
-					break;
-				}
-			}
-		}
-		else
-		{
-			new
-				offset = timers[i][1];
-			for (new j = i + 1; j != periods; ++j)
-			{
-				// Find similar periods.
-				new
-					ct = timers[j][0];
-				if ((time / ct) * ct == time)
-				{
-					// This time is larger.
-				}
-				else if ((ct / time) * time == ct)
-				{
-				}
-				if ((time / ct) * ct == time || (ct / time) * time == ct)
-				{
-					// That's integer division, so valid code.  Mark this
-					// element as controlled by another element.
-					timers[j][2] = offset;
-					offset += timers[j][1];
-				}
-			}
-			timers[i][1] = offset;
-		}
-	}*/
-	C:1(for(new i;i!=periods;++i)printf("%d %d %d",timers[i][0],timers[i][1],0););//,timers[i][2]););
-	// Now we know how many of each period there are we can try arrange them so
-	// that they execute at very different times.
-	// [1] contains the total number of timers on similar periods.
-	for (new i = 0; i != periods; ++i)
-	{
-		// First calculate the gap between the timers.
-		new
-			time = timers[i][0],
-			offset = time / timers[i][1];
-		// Now start all the timers with this time at that offset.
-		idx = 0;
-		new
-			last = 0,
-			curo = offset;
-		while ((idx = Scripting_GetPublicFast(idx, buffer, (Scripting_FastString('@', 'y', 'T', '_')))))
-		{
-			if (strval(buffer[4]) == time)
-			{
-				// That's the old start code, which uses 7ms offsets to try get
-				// as close as possible to different server frames (5ms).
-				SetTimerEx("Timer_Start", curo + (random(14) - 7), 0, "ii", last, time);
-				//SetTimerEx("Timer_Start", curo, 0, "ii", last, time);
-				curo += offset;
-			}
-			// So that the first found timer in the next function is correct.
-			last = idx;
-		}
-	}
-	CallLocalFunction("Timers_OnScriptInit", "");
-}
-
-#if defined FILTERSCRIPT
-	#if defined _ALS_OnFilterScriptInit
-		#undef OnFilterScriptInit
-	#else
-		#define _ALS_OnFilterScriptInit
-	#endif
-	#define OnFilterScriptInit Timers_OnScriptInit
-#else
-	#if defined _ALS_OnGameModeInit
-		#undef OnGameModeInit
-	#else
-		#define _ALS_OnGameModeInit
-	#endif
-	#define OnGameModeInit Timers_OnScriptInit
+#if defined USE_Y_TIMERS_V1
+	#error y_timers version 1 has not worked in years!
+	#include "y_timers/v1"
+	#endinput
 #endif
 
-forward Timers_OnScriptInit();
+#include "internal\y_plugins"
 
-/*----------------------------------------------------------------------------*-
-Function:
-	Timer_Start
-Params:
-	timer - Approximate public function index.
-	delay - How often it's called.
-Return:
-	-
-Notes:
-	Only needed for more than one timer.  Offsets calls from each other for
-	better server load distribution.
--*----------------------------------------------------------------------------*/
+#include "y_timers/impl"
+#if defined _YSI_PLUGINS_FIXES_2
+	//#error V3
+	#include "y_timers/v3"
+#else
+	#include "y_timers/v2"
+#endif
 
-public Timer_Start(timer, delay)
-{
-	new
-		buffer[32];
-	Scripting_GetPublicFast(timer, buffer, (Scripting_FastString('@', 'y', 'T', '_')));
-	SetTimer(buffer, delay, 1);
-}
+#if defined YSI_TESTS
+	#include "y_testing"
+	#include "y_timers/tests"
+#endif
