@@ -1,18 +1,3 @@
-/*==============================================================================
-=========================Made by Jafet Macario==================================
-================================================================================
-WARNING: THIS IS NOT A GF/LARP EDIT, IT HAS BEEN MADE FROM SCRATCH!
-WARNING: This has been made for new users in PAWN so they can get started.
-====================================CREDITS=====================================
-Thanks to:
-Y_Less for his impressive sscanf and foreach,
-DracoBlue for his dini and dudb,
-ZeeX for his ZCMD,
-MadMan for his Vehicle System,
-Jafet Macario - Made this gamemode
-Reignald Bailey - Helped me with some stuff.
-SkizzoTrick for his tutorial.
-=====================Please DO NOT REMOVE the Credits===========================*/
 //================================[INCLUDES]====================================
 #include <a_samp>
 #include <YSI\y_ini>
