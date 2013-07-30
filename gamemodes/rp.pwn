@@ -1702,16 +1702,12 @@ public OnPlayerSpawn(playerid)
 	}
     if(PlayerInfo[playerid][pFirstJoined] == 0)
 	{
-	    //new string[512];
+		//	    new string[512];
 	    gPlayerTutorialing[playerid] = 1;
 	    SetPlayerHealth(playerid,100);
-	    SetPlayerPos(playerid,5184.3589, 0.8383, 30.3718);
-	    SetPlayerCameraPos(playerid,5184.3589, 0.8383, 30.3718);//The airport
-	    SetPlayerCameraLookAt(playerid,5184.3589, 0.8383, 30.3718);
-	    //format(string,sizeof(string),"This is the airport,your first spawn place ~n~ You will be able to change it if~n~you will get into a faction~n~or if you will buy a house~n~Basic Commands:/help.");
-	    //TextDrawSetString(Textdraw98[playerid],string);
-	    //TextDrawShowForPlayer(playerid,Textdraw98[playerid]);
-	    //SendClientMessage(playerid,COLOR_WHITE,"{248B10}Tutorial:{FFFFFF}Use SPACEBAR to continue,SHIFT to go back.");
+	    SetPlayerPos(playerid,5184.4976,-32.1681,21.7722);
+	    SetPlayerCameraPos(playerid,5184.4976,-32.1681,21.7722);
+	    SetPlayerCameraLookAt(playerid,5184.3589, -29.8383, 30.3718);
 	    SetPlayerSkin(playerid, PlayerInfo[playerid][pModel]);
 	    return 1;
 	}
@@ -1720,7 +1716,7 @@ public OnPlayerSpawn(playerid)
     	SendClientMessage(playerid, COLOR_LIGHTRED, "** This server requires a Login BEFORE spawn (Kicked) **");
         Kick(playerid);
  	}
-	SetPlayerPos(playerid, 5184.3589, 0.8383, 30.3718);
+	SetPlayerPos(playerid, 5184.4976,-32.1681,21.7722);
 	SetPlayerInterior(playerid,0);
 	SetPlayerVirtualWorld(playerid, 0);
 	SetOriginalColor(playerid);
@@ -2545,7 +2541,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         	new string[64];
 			format(string, sizeof(string),"So you are %s years old", inputtext);
 			SendClientMessage(playerid, COLOR_YELLOW2, string);
-			new sexthings[] = " Europe \n America \n Russia";
+			//new sexthings[] = "America";
 			if(strval(inputtext) <= 15)
 			{
 				SendClientMessage(playerid, COLOR_WHITE, "SERVER: This is a 16+ Only Server, Grow up and Come Back.");
@@ -2562,7 +2558,16 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 
 
 			}
-			ShowPlayerDialog(playerid,157,DIALOG_STYLE_LIST,"Where are you from?:((This information is IC.))",sexthings,"Select","Leave Game");
+			PlayerInfo[playerid][pPlace] = 2;
+			//SendClientMessage(playerid, COLOR_YELLOW2, "So you are from United States.");
+			gPlayerRegStep[playerid] = 0;
+			PlayerInfo[playerid][pSelected] = 1;
+			//ShowPlayerDialog(playerid,157,DIALOG_STYLE_LIST,"Where are you from?:((This information is IC.))",sexthings,"Select","Leave Game");
+			GivePlayerCash(playerid, 1000);
+            TogglePlayerControllable(playerid, 1);
+            SendClientMessage(playerid, COLOR_YELLOW2,"That's all, if you need help you can /helpme and /help, have fun!");
+            //SendClientMessage(playerid, COLOR_LIGHTBLUE,"A taxi has bringed you to the DMV so you can take your Drivers License");
+            SetPlayerPos(playerid, 5184.4976,-32.1681,21.7722);
 		}
 		else
 		{
@@ -2636,8 +2641,8 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             GivePlayerCash(playerid, 1000);
             TogglePlayerControllable(playerid, 1);
             SendClientMessage(playerid, COLOR_YELLOW2,"That's all, if you need help you can /helpme, have fun!");
-            //SendClientMessage(playerid, COLOR_LIGHTBLUE,"A taxi has bringed you to the DMV so you can take your Drivers License");
-            SetPlayerPos(playerid, 5184.3589, 0.8383, 30.3718);
+            SendClientMessage(playerid, COLOR_LIGHTBLUE,"A taxi has bringed you to the DMV so you can take your Drivers License");
+            SetPlayerPos(playerid, 1424.1869,-1696.1482,13.5469);
 		}
 		else
 		{
