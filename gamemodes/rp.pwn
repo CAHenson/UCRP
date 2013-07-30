@@ -37,7 +37,7 @@
 #define DIALOG_VEHICLE_PLATE 507
 #define DIALOG_FUEL 510
 #define DIALOG_EDITVEHICLE 606
-#define strcpy(%0,%1,%2) %0="",strcat(%0,%2,%1)
+#define strcpy(%0,%1,%2) %0="", strcat(%0,%2,%1)
 #define ShowErrorDialog(%1,%2) ShowPlayerDialog(%1, DIALOG_ERROR, DIALOG_STYLE_MSGBOX, "ERROR", %2, "OK", "")
 //==============================[COLORS DEFINES]================================
 #define ResetMoneyBar ResetPlayerMoney
@@ -128,14 +128,7 @@ forward StopAlarm(vehicleid);
 //===================================ENGINE=====================================
 forward StartEngine(playerid);
 forward DamagedEngine(playerid);
-new reg1[ ] = "This is a RolePlay Server.\n{FFFFFF}DeathMatch {F81414}isn't accepted {FFFFFF}only if you have a good RP reason!.\n",
-    reg2[ ] = "When you start to play you must know the basic rules.\nFor that is the next {F81414}tutorial.\n\n",
-    reg3[ ] = "•Cheats or Bug Abuse is forbidden, you will end up with {F81414}Ban PERMANENT.\n",
-    reg4[ ] = "•Keep a decent {F81414}language {FFFFFF}on the server.\n",
-    reg5[ ] = "•Spamming will lead you to {F81414}mute/kick.\n",
-    reg6[ ] = "•DriveBy isn't allowed, only with a {F81414}good {FFFFFF}RP reason.\n",
-    reg7[ ] = "•Remember, ALWAYS RolePlay.\n",
-    reg8[ ] = "\n\n{F81414}Ultimate City {F3FF02}wishes you good luck!";
+new reg1[ ] = "Welcome to {F81414}Ultimate City{F3FF02}!";
 //==================================[ENUMS]=====================================
 enum pInfo
 {
@@ -1619,7 +1612,7 @@ public OnPlayerConnect(playerid)
 	gPlayerTutorialing[playerid] = 0;
 	format(string, sizeof(string), "/Users/%s.ini", plname);
 	new DialogString[1024];
-    format(DialogString, sizeof DialogString, "%s%s%s%s%s%s%s%s", reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8);
+    format(DialogString, sizeof DialogString, "%s", reg1);
 	ShowPlayerDialog(playerid,1234, DIALOG_STYLE_MSGBOX,"Introduction...", DialogString,"Accept","Refuse");
 //===================================[MAPICONS]=================================
 	SetPlayerMapIcon(playerid, 1, 597.559509, -1249.448608, 18.307994, 52, 1);
@@ -1693,7 +1686,7 @@ public OnPlayerSpawn(playerid)
 	{
 		new sexthings[] = "1\tMale \n2\tFemale";
 		ShowPlayerDialog(playerid,155,DIALOG_STYLE_LIST,"Hello sir,please select your Sex:((This information is IC.))",sexthings,"Select","Leave Game");
-		SetPlayerPos(playerid, 5184.3589, 0.8383, 30.3718);
+		SetPlayerPos(playerid, 5184.4976,-32.1681,21.7722);
 		gPlayerRegStep[playerid] = 1;
 		new randphone = 100000 + random(899999);
 		PlayerInfo[playerid][pNumber] = randphone;
@@ -1702,11 +1695,11 @@ public OnPlayerSpawn(playerid)
     if(PlayerInfo[playerid][pFirstJoined] == 0)
 	{
 		//	    new string[512];
-	    gPlayerTutorialing[playerid] = 1;
+	    gPlayerTutorialing[playerid] = 0;
 	    SetPlayerHealth(playerid,100);
 	    SetPlayerPos(playerid,5184.4976,-32.1681,21.7722);
 	    SetPlayerCameraPos(playerid,5184.4976,-32.1681,21.7722);
-	    SetPlayerCameraLookAt(playerid,5184.3589, -29.8383, 30.3718);
+	    SetPlayerCameraLookAt(playerid,5184.3203,-10.4520,20.8974);
 	    SetPlayerSkin(playerid, PlayerInfo[playerid][pModel]);
 	    return 1;
 	}
